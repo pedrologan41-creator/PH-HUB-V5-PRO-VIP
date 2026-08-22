@@ -26,52 +26,33 @@ local dragStart = nil
 local startPos = nil
 local BypassKey = Enum.KeyCode.K
 local isSettingKey = false
-
---// Anti-Ban (JÁ ATIVADO)
 local AntiBanEnabled = true
-
---// Modo Leve
 local LightModeEnabled = false
-
---// Settings
 local GodModeEnabled = false
 local WalkSpeedEnabled = false
 local WalkSpeedValue = 50
-
---// God Settings
 local InvisibleEnabled = false
 local FlyEnabled = false
 local FlySpeed = 50
 local NoClipEnabled = false
 
---// Fly Controls
 local FlyKeys = {
-    Forward = false,
-    Backward = false,
-    Left = false,
-    Right = false,
-    Up = false,
-    Down = false
+    Forward = false, Backward = false, Left = false,
+    Right = false, Up = false, Down = false
 }
 
 local ESPSettings = {
-    Enabled = false,
-    Lines = false,
-    Names = false,
-    Health = false
+    Enabled = false, Lines = false, Names = false, Health = false
 }
 
 local AimbotSettings = {
-    Enabled = false,
-    FOV = 100
+    Enabled = false, FOV = 100
 }
 
 local SpinSettings = {
-    Enabled = false,
-    Speed = 10
+    Enabled = false, Speed = 10
 }
 
---// Connections
 local ESPObjects = {}
 local AimbotConnection = nil
 local SpinConnection = nil
@@ -81,46 +62,14 @@ local NoClipConnection = nil
 local CurrentTarget = nil
 
 --// ============================================
---// SISTEMA ANTI-BAN (ATIVADO AUTOMATICAMENTE)
---// ============================================
-spawn(function()
-    while AntiBanEnabled do
-        wait(10)
-        
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer then
-                local isAdmin = false
-                
-                pcall(function()
-                    if player:GetRankInGroup(0) > 0 then
-                        isAdmin = true
-                    end
-                end)
-                
-                if player.UserId == game.CreatorId then
-                    isAdmin = true
-                end
-                
-                if isAdmin then
-                    DeactivateAllFunctions()
-                    MainFrame.Visible = false
-                    wait(30)
-                    MainFrame.Visible = true
-                end
-            end
-        end
-    end
-end)
-
---// ============================================
---// MAIN FRAME
+--// MAIN FRAME (CRIADO PRIMEIRO)
 --// ============================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 550, 0, 420)
 MainFrame.Position = UDim2.new(0.5, -275, 0.5, -210)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
 MainFrame.BorderSizePixel = 0
-MainFrame.Visible = false
+MainFrame.Visible = false -- Começa invisível
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
@@ -238,10 +187,7 @@ local function CreateToggle(parent, name, yPos, callback, defaultState)
     Corner.Parent = Button
     
     local isOn = defaultState or false
-    
-    if isOn then
-        Button.BackgroundColor3 = Color3.fromRGB(40, 100, 60)
-    end
+    if isOn then Button.BackgroundColor3 = Color3.fromRGB(40, 100, 60) end
     
     Button.MouseButton1Click:Connect(function()
         isOn = not isOn
@@ -249,6 +195,8 @@ local function CreateToggle(parent, name, yPos, callback, defaultState)
         Button.BackgroundColor3 = isOn and Color3.fromRGB(40, 100, 60) or Color3.fromRGB(35, 35, 48)
         callback(isOn)
     end)
+    
+    return Button
 end
 
 local function CreateSlider(parent, name, yPos, minVal, maxVal, defaultVal, callback)
@@ -323,14 +271,10 @@ for i, cat in ipairs(Categories) do
             otherCat.Content.Visible = false
         end
         Content.Visible = true
-        
         for _, otherCat in ipairs(Categories) do
             local btn = Sidebar:FindFirstChild(otherCat.Name .. "Btn")
-            if btn then
-                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-            end
+            if btn then btn.BackgroundColor3 = Color3.fromRGB(30, 30, 42) end
         end
-        
         CatButton.BackgroundColor3 = Color3.fromRGB(50, 80, 150)
     end)
     
@@ -345,9 +289,7 @@ Categories[1].Content.Visible = true
 local function ActivateInvisible()
     if LocalPlayer.Character then
         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Transparency = 1
-            end
+            if part:IsA("BasePart") then part.Transparency = 1 end
         end
     end
 end
@@ -364,30 +306,22 @@ end
 
 local function ActivateFly()
     if FlyConnection then FlyConnection:Disconnect() end
-    
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    
     local rootPart = LocalPlayer.Character.HumanoidRootPart
     local humanoid = LocalPlayer.Character.Humanoid
     humanoid.PlatformStand = true
-    
     FlyConnection = RunService.RenderStepped:Connect(function()
         if FlyEnabled and LocalPlayer.Character then
             local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if root then
                 local moveDirection = Vector3.new(0, 0, 0)
-                
                 if FlyKeys.Forward then moveDirection += Camera.CFrame.LookVector end
                 if FlyKeys.Backward then moveDirection -= Camera.CFrame.LookVector end
                 if FlyKeys.Left then moveDirection -= Camera.CFrame.RightVector end
                 if FlyKeys.Right then moveDirection += Camera.CFrame.RightVector end
                 if FlyKeys.Up then moveDirection += Vector3.new(0, 1, 0) end
                 if FlyKeys.Down then moveDirection -= Vector3.new(0, 1, 0) end
-                
-                if moveDirection.Magnitude > 0 then
-                    moveDirection = moveDirection.Unit * FlySpeed
-                end
-                
+                if moveDirection.Magnitude > 0 then moveDirection = moveDirection.Unit * FlySpeed end
                 root.Velocity = moveDirection
             end
         end
@@ -403,32 +337,24 @@ end
 
 local function ActivateNoClip()
     if NoClipConnection then NoClipConnection:Disconnect() end
-    
     NoClipConnection = RunService.Stepped:Connect(function()
         if NoClipEnabled and LocalPlayer.Character then
             local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-            
             if rootPart then
                 for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+                    if part:IsA("BasePart") then part.CanCollide = false end
                 end
-                
                 if humanoid then
                     humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
                     humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
                 end
-                
                 local rayOrigin = rootPart.Position
                 local rayDirection = Vector3.new(0, -5, 0)
                 local raycastParams = RaycastParams.new()
                 raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
                 raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                
                 local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-                
                 if raycastResult then
                     local groundDistance = (rayOrigin - raycastResult.Position).Magnitude
                     if groundDistance > 3 then
@@ -444,11 +370,8 @@ local function DeactivateNoClip()
     if NoClipConnection then NoClipConnection:Disconnect() NoClipConnection = nil end
     if LocalPlayer.Character then
         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
+            if part:IsA("BasePart") then part.CanCollide = true end
         end
-        
         local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
         if humanoid then
             humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
@@ -457,45 +380,23 @@ local function DeactivateNoClip()
     end
 end
 
---// ============================================
---// MODO LEVE (Texturas Leves)
---// ============================================
 local function ActivateLightMode()
-    -- Remove sombras
     Lighting.GlobalShadows = false
-    
-    -- Remove neblina
     Lighting.FogEnd = 100000
-    
-    -- Remove brilho
     Lighting.Brightness = 1
-    
-    -- Define horário fixo
     Lighting.ClockTime = 12
     Lighting.ExposureCompensation = 0
-    
-    -- Remove texturas de todos os objetos
     for _, part in ipairs(workspace:GetDescendants()) do
         if part:IsA("BasePart") then
-            pcall(function()
-                part.Material = Enum.Material.SmoothPlastic
-                part.Reflectance = 0
-            end)
+            pcall(function() part.Material = Enum.Material.SmoothPlastic part.Reflectance = 0 end)
         end
-        
         if part:IsA("Texture") or part:IsA("Decal") then
-            pcall(function()
-                part:Destroy()
-            end)
+            pcall(function() part:Destroy() end)
         end
     end
-    
-    -- Remove partículas
     for _, particle in ipairs(workspace:GetDescendants()) do
         if particle:IsA("ParticleEmitter") or particle:IsA("Smoke") or particle:IsA("Fire") then
-            pcall(function()
-                particle.Enabled = false
-            end)
+            pcall(function() particle.Enabled = false end)
         end
     end
 end
@@ -529,14 +430,12 @@ end)
 local PlayerContent = Categories[1].Content
 
 CreateLabel(PlayerContent, "PLAYER", 5)
-
 CreateToggle(PlayerContent, "WalkSpeed", 30, function(state)
     WalkSpeedEnabled = state
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = state and WalkSpeedValue or 16
     end
 end)
-
 CreateSlider(PlayerContent, "Velocidade", 75, 30, 300, 50, function(value)
     WalkSpeedValue = value
     if WalkSpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -545,34 +444,19 @@ CreateSlider(PlayerContent, "Velocidade", 75, 30, 300, 50, function(value)
 end)
 
 CreateLabel(PlayerContent, "ESP", 130)
+CreateToggle(PlayerContent, "ESP Normal", 155, function(state) ESPSettings.Enabled = state end)
+CreateToggle(PlayerContent, "ESP Linha", 200, function(state) ESPSettings.Lines = state end)
+CreateToggle(PlayerContent, "ESP Nome", 245, function(state) ESPSettings.Names = state end)
+CreateToggle(PlayerContent, "ESP Vida", 290, function(state) ESPSettings.Health = state end)
 
-CreateToggle(PlayerContent, "ESP Normal", 155, function(state)
-    ESPSettings.Enabled = state
-end)
-
-CreateToggle(PlayerContent, "ESP Linha", 200, function(state)
-    ESPSettings.Lines = state
-end)
-
-CreateToggle(PlayerContent, "ESP Nome", 245, function(state)
-    ESPSettings.Names = state
-end)
-
-CreateToggle(PlayerContent, "ESP Vida", 290, function(state)
-    ESPSettings.Health = state
-end)
-
-CreateLabel(PlayerContent, "AIMBOT", 345)
-
-CreateToggle(PlayerContent, "Aimbot", 370, function(state)
+CreateLabel(PlayerContent, "AIMBOT (Tecla F)", 345)
+local AimbotButton = CreateToggle(PlayerContent, "Aimbot", 370, function(state)
     AimbotSettings.Enabled = state
     if state then
         if AimbotConnection then AimbotConnection:Disconnect() end
         AimbotConnection = RunService.RenderStepped:Connect(function()
             if AimbotSettings.Enabled then
-                if not CurrentTarget or not IsInFOV(CurrentTarget) then
-                    CurrentTarget = FindBestTarget()
-                end
+                if not CurrentTarget or not IsInFOV(CurrentTarget) then CurrentTarget = FindBestTarget() end
                 if CurrentTarget then AimAtTarget(CurrentTarget) end
             end
         end)
@@ -581,13 +465,9 @@ CreateToggle(PlayerContent, "Aimbot", 370, function(state)
         CurrentTarget = nil
     end
 end)
-
-CreateSlider(PlayerContent, "FOV", 415, 50, 300, 100, function(value)
-    AimbotSettings.FOV = value
-end)
+CreateSlider(PlayerContent, "FOV", 415, 50, 300, 100, function(value) AimbotSettings.FOV = value end)
 
 CreateLabel(PlayerContent, "SPIN", 470)
-
 CreateToggle(PlayerContent, "Spin", 495, function(state)
     SpinSettings.Enabled = state
     if state then
@@ -605,12 +485,32 @@ CreateToggle(PlayerContent, "Spin", 495, function(state)
         if SpinConnection then SpinConnection:Disconnect() SpinConnection = nil end
     end
 end)
-
-CreateSlider(PlayerContent, "Velocidade do Giro", 540, 0, 100, 10, function(value)
-    SpinSettings.Speed = value
-end)
+CreateSlider(PlayerContent, "Velocidade do Giro", 540, 0, 100, 10, function(value) SpinSettings.Speed = value end)
 
 PlayerContent.CanvasSize = UDim2.new(0, 0, 0, 600)
+
+--// Tecla F para Aimbot
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.F and not gameProcessed then
+        AimbotSettings.Enabled = not AimbotSettings.Enabled
+        if AimbotSettings.Enabled then
+            if AimbotConnection then AimbotConnection:Disconnect() end
+            AimbotConnection = RunService.RenderStepped:Connect(function()
+                if AimbotSettings.Enabled then
+                    if not CurrentTarget or not IsInFOV(CurrentTarget) then CurrentTarget = FindBestTarget() end
+                    if CurrentTarget then AimAtTarget(CurrentTarget) end
+                end
+            end)
+            AimbotButton.Text = "Aimbot: ON"
+            AimbotButton.BackgroundColor3 = Color3.fromRGB(40, 100, 60)
+        else
+            if AimbotConnection then AimbotConnection:Disconnect() AimbotConnection = nil end
+            CurrentTarget = nil
+            AimbotButton.Text = "Aimbot: OFF"
+            AimbotButton.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
+        end
+    end
+end)
 
 --// ============================================
 --// GOD CATEGORY
@@ -618,7 +518,6 @@ PlayerContent.CanvasSize = UDim2.new(0, 0, 0, 600)
 local GodContent = Categories[2].Content
 
 CreateLabel(GodContent, "GOD MODE", 5)
-
 CreateToggle(GodContent, "God Mode", 30, function(state)
     GodModeEnabled = state
     if state then
@@ -640,18 +539,13 @@ CreateToggle(GodContent, "Invisible", 75, function(state)
 end)
 
 CreateLabel(GodContent, "FLY", 125)
-
 CreateToggle(GodContent, "Fly", 150, function(state)
     FlyEnabled = state
     if state then ActivateFly() else DeactivateFly() end
 end)
-
-CreateSlider(GodContent, "Velocidade do Fly", 195, 10, 200, 50, function(value)
-    FlySpeed = value
-end)
+CreateSlider(GodContent, "Velocidade do Fly", 195, 10, 200, 50, function(value) FlySpeed = value end)
 
 CreateLabel(GodContent, "NOCLIP", 250)
-
 CreateToggle(GodContent, "NoClip", 275, function(state)
     NoClipEnabled = state
     if state then ActivateNoClip() else DeactivateNoClip() end
@@ -685,7 +579,6 @@ KeyButton.MouseButton1Click:Connect(function()
     isSettingKey = true
     KeyButton.Text = "Pressione uma tecla..."
     KeyButton.BackgroundColor3 = Color3.fromRGB(150, 80, 200)
-    
     local connection
     connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if isSettingKey and input.UserInputType == Enum.UserInputType.Keyboard then
@@ -699,16 +592,13 @@ KeyButton.MouseButton1Click:Connect(function()
 end)
 
 CreateLabel(ConfigContent, "PERFORMANCE", 85)
-
 CreateToggle(ConfigContent, "Modo Leve", 110, function(state)
     if state then
         LightModeEnabled = true
         ActivateLightMode()
     end
-    -- Não permite desativar
 end)
 
---// Aviso do Modo Leve
 local LightModeWarning = Instance.new("TextLabel")
 LightModeWarning.Size = UDim2.new(1, -30, 0, 35)
 LightModeWarning.Position = UDim2.new(0, 15, 0, 150)
@@ -726,10 +616,7 @@ WarningCorner.CornerRadius = UDim.new(0, 6)
 WarningCorner.Parent = LightModeWarning
 
 CreateLabel(ConfigContent, "ANTI-BAN", 200)
-
-CreateToggle(ConfigContent, "Anti-Ban", 225, function(state)
-    AntiBanEnabled = state
-end, true) -- Anti-Ban já ativado
+CreateToggle(ConfigContent, "Anti-Ban", 225, function(state) AntiBanEnabled = state end, true)
 
 ConfigContent.CanvasSize = UDim2.new(0, 0, 0, 280)
 
@@ -786,11 +673,8 @@ local function CreateESP(player)
     line.Visible = false
     
     ESPObjects[player] = {
-        Highlight = highlight,
-        NameLabel = nameLabel,
-        HealthBar = healthBar,
-        HealthFill = healthFill,
-        Line = line
+        Highlight = highlight, NameLabel = nameLabel,
+        HealthBar = healthBar, HealthFill = healthFill, Line = line
     }
 end
 
@@ -810,17 +694,13 @@ RunService.RenderStepped:Connect(function()
         if player.Character and player.Character:FindFirstChild("Humanoid") and player.Character:FindFirstChild("HumanoidRootPart") then
             local humanoid = player.Character.Humanoid
             local rootPart = player.Character.HumanoidRootPart
-            
             esp.Highlight.Enabled = ESPSettings.Enabled
             esp.Highlight.Parent = player.Character
-            
             esp.NameLabel.Enabled = ESPSettings.Names
             esp.NameLabel.Parent = player.Character
-            
             esp.HealthBar.Enabled = ESPSettings.Health
             esp.HealthBar.Parent = player.Character
             esp.HealthFill.Size = UDim2.new(humanoid.Health / humanoid.MaxHealth, 0, 1, 0)
-            
             if ESPSettings.Lines then
                 local screenPos, onScreen = Camera:WorldToScreenPoint(rootPart.Position)
                 if onScreen then
@@ -851,10 +731,8 @@ function IsInFOV(player)
     local head = player.Character:FindFirstChild("Head")
     local humanoid = player.Character:FindFirstChild("Humanoid")
     if not head or not humanoid or humanoid.Health <= 0 then return false end
-    
     local screenPos, onScreen = Camera:WorldToScreenPoint(head.Position)
     if not onScreen then return false end
-    
     local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     return (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude <= AimbotSettings.FOV
 end
@@ -863,7 +741,6 @@ function FindBestTarget()
     local bestTarget = nil
     local bestDistance = AimbotSettings.FOV
     local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local head = player.Character:FindFirstChild("Head")
@@ -889,7 +766,6 @@ function AimAtTarget(target)
     local humanoid = target.Character:FindFirstChild("Humanoid")
     if not head or not humanoid or humanoid.Health <= 0 then CurrentTarget = nil return end
     if not IsInFOV(target) then CurrentTarget = nil return end
-    
     Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, head.Position)
 end
 
@@ -912,35 +788,27 @@ end)
 function DeactivateAllFunctions()
     GodModeEnabled = false
     if GodModeConnection then GodModeConnection:Disconnect() GodModeConnection = nil end
-    
     WalkSpeedEnabled = false
     DeactivateWalkSpeed()
-    
     InvisibleEnabled = false
     DeactivateInvisible()
-    
     FlyEnabled = false
     DeactivateFly()
-    
     NoClipEnabled = false
     DeactivateNoClip()
-    
     ESPSettings.Enabled = false
     ESPSettings.Lines = false
     ESPSettings.Names = false
     ESPSettings.Health = false
-    
     for player, esp in pairs(ESPObjects) do
         if esp.Highlight then esp.Highlight.Enabled = false end
         if esp.NameLabel then esp.NameLabel.Enabled = false end
         if esp.HealthBar then esp.HealthBar.Enabled = false end
         if esp.Line then esp.Line.Visible = false esp.Line.Transparency = 1 end
     end
-    
     AimbotSettings.Enabled = false
     if AimbotConnection then AimbotConnection:Disconnect() AimbotConnection = nil end
     CurrentTarget = nil
-    
     SpinSettings.Enabled = false
     if SpinConnection then SpinConnection:Disconnect() SpinConnection = nil end
 end
@@ -982,9 +850,7 @@ TopBar.InputBegan:Connect(function(input)
         dragStart = input.Position
         startPos = MainFrame.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
         end)
     end
 end)
@@ -1020,9 +886,7 @@ end
 
 LocalPlayer.CharacterAdded:Connect(function(character)
     wait(0.5)
-    if WalkSpeedEnabled then
-        character:WaitForChild("Humanoid").WalkSpeed = WalkSpeedValue
-    end
+    if WalkSpeedEnabled then character:WaitForChild("Humanoid").WalkSpeed = WalkSpeedValue end
     if SpinSettings.Enabled then
         if SpinConnection then SpinConnection:Disconnect() end
         SpinConnection = RunService.RenderStepped:Connect(function()
@@ -1049,49 +913,142 @@ ScreenGui.Destroying:Connect(function()
     for player, _ in pairs(ESPObjects) do RemoveESP(player) end
 end)
 
---// Splash
-local Splash = Instance.new("Frame")
-Splash.Size = UDim2.new(0, 350, 0, 120)
-Splash.Position = UDim2.new(0.5, -175, 0.5, -60)
-Splash.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
-Splash.BorderSizePixel = 0
-Splash.ZIndex = 100
-Splash.Parent = ScreenGui
+--// ============================================
+--// SISTEMA DE KEY
+--// ============================================
+local CorrectKey = "152"
+local KeyVerified = false
 
-local SplashCorner = Instance.new("UICorner")
-SplashCorner.CornerRadius = UDim.new(0, 12)
-SplashCorner.Parent = Splash
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Size = UDim2.new(0, 350, 0, 200)
+KeyFrame.Position = UDim2.new(0.5, -175, 0.5, -100)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+KeyFrame.BorderSizePixel = 0
+KeyFrame.ZIndex = 200
+KeyFrame.Parent = ScreenGui
 
-local SplashText = Instance.new("TextLabel")
-SplashText.Size = UDim2.new(1, 0, 0, 50)
-SplashText.Position = UDim2.new(0, 0, 0, 20)
-SplashText.BackgroundTransparency = 1
-SplashText.Text = "PH XITER VIP"
-SplashText.TextColor3 = Color3.fromRGB(100, 150, 255)
-SplashText.Font = Enum.Font.GothamBlack
-SplashText.TextSize = 28
-SplashText.ZIndex = 101
-SplashText.Parent = Splash
+local KeyCorner = Instance.new("UICorner")
+KeyCorner.CornerRadius = UDim.new(0, 15)
+KeyCorner.Parent = KeyFrame
 
-local SplashSub = Instance.new("TextLabel")
-SplashSub.Size = UDim2.new(1, 0, 0, 20)
-SplashSub.Position = UDim2.new(0, 0, 0, 75)
-SplashSub.BackgroundTransparency = 1
-SplashSub.Text = "Carregando..."
-SplashSub.TextColor3 = Color3.fromRGB(150, 150, 150)
-SplashSub.Font = Enum.Font.Gotham
-SplashSub.TextSize = 12
-SplashSub.ZIndex = 101
-SplashSub.Parent = Splash
+local KeyStroke = Instance.new("UIStroke")
+KeyStroke.Color = Color3.fromRGB(100, 150, 255)
+KeyStroke.Thickness = 2
+KeyStroke.Parent = KeyFrame
 
-spawn(function()
-    wait(2)
-    TweenService:Create(Splash, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(SplashText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-    TweenService:Create(SplashSub, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-    wait(0.5)
-    Splash:Destroy()
-    MainFrame.Visible = true
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, 0, 0, 40)
+KeyTitle.Position = UDim2.new(0, 0, 0, 20)
+KeyTitle.BackgroundTransparency = 1
+KeyTitle.Text = "🔐 DIGITE A KEY"
+KeyTitle.TextColor3 = Color3.fromRGB(100, 150, 255)
+KeyTitle.Font = Enum.Font.GothamBlack
+KeyTitle.TextSize = 20
+KeyTitle.ZIndex = 201
+KeyTitle.Parent = KeyFrame
+
+local KeyInput = Instance.new("TextBox")
+KeyInput.Size = UDim2.new(1, -60, 0, 40)
+KeyInput.Position = UDim2.new(0, 30, 0, 70)
+KeyInput.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+KeyInput.BorderSizePixel = 0
+KeyInput.PlaceholderText = "Digite a key..."
+KeyInput.Text = ""
+KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInput.Font = Enum.Font.GothamBold
+KeyInput.TextSize = 16
+KeyInput.ZIndex = 201
+KeyInput.Parent = KeyFrame
+
+local KeyInputCorner = Instance.new("UICorner")
+KeyInputCorner.CornerRadius = UDim.new(0, 8)
+KeyInputCorner.Parent = KeyInput
+
+local VerifyButton = Instance.new("TextButton")
+VerifyButton.Size = UDim2.new(1, -60, 0, 40)
+VerifyButton.Position = UDim2.new(0, 30, 0, 120)
+VerifyButton.BackgroundColor3 = Color3.fromRGB(50, 80, 150)
+VerifyButton.BorderSizePixel = 0
+VerifyButton.Text = "VERIFICAR"
+VerifyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+VerifyButton.Font = Enum.Font.GothamBlack
+VerifyButton.TextSize = 14
+VerifyButton.ZIndex = 201
+VerifyButton.Parent = KeyFrame
+
+local VerifyCorner = Instance.new("UICorner")
+VerifyCorner.CornerRadius = UDim.new(0, 8)
+VerifyCorner.Parent = VerifyButton
+
+local KeyError = Instance.new("TextLabel")
+KeyError.Size = UDim2.new(1, 0, 0, 20)
+KeyError.Position = UDim2.new(0, 0, 0, 170)
+KeyError.BackgroundTransparency = 1
+KeyError.Text = ""
+KeyError.TextColor3 = Color3.fromRGB(255, 100, 100)
+KeyError.Font = Enum.Font.Gotham
+KeyError.TextSize = 12
+KeyError.ZIndex = 201
+KeyError.Parent = KeyFrame
+
+local function VerifyKey()
+    if KeyInput.Text == CorrectKey then
+        KeyVerified = true
+        KeyFrame:Destroy()
+        -- Mostra o Splash
+        local Splash = Instance.new("Frame")
+        Splash.Size = UDim2.new(0, 350, 0, 120)
+        Splash.Position = UDim2.new(0.5, -175, 0.5, -60)
+        Splash.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
+        Splash.BorderSizePixel = 0
+        Splash.ZIndex = 100
+        Splash.Parent = ScreenGui
+        
+        local SplashCorner = Instance.new("UICorner")
+        SplashCorner.CornerRadius = UDim.new(0, 12)
+        SplashCorner.Parent = Splash
+        
+        local SplashText = Instance.new("TextLabel")
+        SplashText.Size = UDim2.new(1, 0, 0, 50)
+        SplashText.Position = UDim2.new(0, 0, 0, 20)
+        SplashText.BackgroundTransparency = 1
+        SplashText.Text = "PH XITER VIP"
+        SplashText.TextColor3 = Color3.fromRGB(100, 150, 255)
+        SplashText.Font = Enum.Font.GothamBlack
+        SplashText.TextSize = 28
+        SplashText.ZIndex = 101
+        SplashText.Parent = Splash
+        
+        local SplashSub = Instance.new("TextLabel")
+        SplashSub.Size = UDim2.new(1, 0, 0, 20)
+        SplashSub.Position = UDim2.new(0, 0, 0, 75)
+        SplashSub.BackgroundTransparency = 1
+        SplashSub.Text = "Key correta! Carregando..."
+        SplashSub.TextColor3 = Color3.fromRGB(150, 150, 150)
+        SplashSub.Font = Enum.Font.Gotham
+        SplashSub.TextSize = 12
+        SplashSub.ZIndex = 101
+        SplashSub.Parent = Splash
+        
+        spawn(function()
+            wait(2)
+            TweenService:Create(Splash, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(SplashText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+            TweenService:Create(SplashSub, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+            wait(0.5)
+            Splash:Destroy()
+            MainFrame.Visible = true -- Agora o MainFrame existe!
+        end)
+    else
+        KeyError.Text = "❌ KEY INCORRETA!"
+        KeyInput.Text = ""
+    end
+end
+
+VerifyButton.MouseButton1Click:Connect(VerifyKey)
+
+KeyInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then VerifyKey() end
 end)
 
 print("PH XITER VIP carregado!")
