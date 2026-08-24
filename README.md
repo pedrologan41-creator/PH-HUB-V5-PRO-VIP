@@ -4,7 +4,7 @@
     Interface bonita com categorias laterais
     Sistema de bypass com tecla K (configurável)
     Com botões ON/OFF em todas as funções
-    Aimbot funcional com FOV visível
+    Aimbot funcional com FOV visível e toggle na tecla F
 ]]
 
 -- Sistema de Key
@@ -202,6 +202,7 @@ function loadHub()
     local ModoLeveEnabled = false
     local FOVSize = 200
     local TargetPlayer = nil
+    local AimbotButton = nil -- Referência ao botão do aimbot
 
     -- Criar círculo de FOV
     local FOVCircle = Instance.new("Frame")
@@ -240,8 +241,7 @@ function loadHub()
         
         local isEnabled = false
         
-        Button.MouseButton1Click:Connect(function()
-            isEnabled = not isEnabled
+        local function updateButton()
             if isEnabled then
                 Button.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
                 Button.Text = name .. " [ON]"
@@ -249,8 +249,19 @@ function loadHub()
                 Button.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
                 Button.Text = name .. " [OFF]"
             end
+        end
+        
+        Button.MouseButton1Click:Connect(function()
+            isEnabled = not isEnabled
+            updateButton()
             callback(isEnabled)
         end)
+        
+        -- Função para atualizar externamente
+        Button.UpdateState = function(enabled)
+            isEnabled = enabled
+            updateButton()
+        end
         
         return Button
     end
@@ -290,6 +301,19 @@ function loadHub()
         for _, v in pairs(ContentFrame:GetChildren()) do
             v:Destroy()
         end
+    end
+
+    -- Função para alternar aimbot
+    local function toggleAimbot()
+        AimbotEnabled = not AimbotEnabled
+        FOVCircle.Visible = AimbotEnabled
+        if not AimbotEnabled then
+            TargetPlayer = nil
+        end
+        if AimbotButton then
+            AimbotButton.UpdateState(AimbotEnabled)
+        end
+        print("Aimbot " .. (AimbotEnabled and "ATIVADO" or "DESATIVADO"))
     end
 
     PlayerCategory.MouseButton1Click:Connect(function()
@@ -335,19 +359,30 @@ function loadHub()
         title.Font = Enum.Font.GothamBold
         title.TextSize = 16
         
-        local aimbot = createToggleButton("🎯 AIMBOT", ContentFrame, function(enabled)
+        AimbotButton = createToggleButton("🎯 AIMBOT (F)", ContentFrame, function(enabled)
             AimbotEnabled = enabled
             FOVCircle.Visible = enabled
             if not enabled then
                 TargetPlayer = nil
             end
         end)
-        aimbot.Position = UDim2.new(0, 10, 0, 40)
+        AimbotButton.Position = UDim2.new(0, 10, 0, 40)
+        
+        -- Aviso sobre a tecla F
+        local fKeyInfo = Instance.new("TextLabel")
+        fKeyInfo.Parent = ContentFrame
+        fKeyInfo.Size = UDim2.new(1, -20, 0, 20)
+        fKeyInfo.Position = UDim2.new(0, 10, 0, 85)
+        fKeyInfo.BackgroundTransparency = 1
+        fKeyInfo.Text = "Pressione F para ativar/desativar rapidamente"
+        fKeyInfo.TextColor3 = Color3.fromRGB(255, 200, 0)
+        fKeyInfo.Font = Enum.Font.Gotham
+        fKeyInfo.TextSize = 11
         
         local fovLabel = Instance.new("TextLabel")
         fovLabel.Parent = ContentFrame
         fovLabel.Size = UDim2.new(1, -20, 0, 25)
-        fovLabel.Position = UDim2.new(0, 10, 0, 90)
+        fovLabel.Position = UDim2.new(0, 10, 0, 110)
         fovLabel.BackgroundTransparency = 1
         fovLabel.Text = "FOV do Aimbot: " .. FOVSize
         fovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -357,7 +392,7 @@ function loadHub()
         local fovSlider = Instance.new("TextBox")
         fovSlider.Parent = ContentFrame
         fovSlider.Size = UDim2.new(1, -20, 0, 35)
-        fovSlider.Position = UDim2.new(0, 10, 0, 120)
+        fovSlider.Position = UDim2.new(0, 10, 0, 140)
         fovSlider.PlaceholderText = "FOV (50-500)"
         fovSlider.Text = tostring(FOVSize)
         fovSlider.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
@@ -460,10 +495,15 @@ function loadHub()
         end)
     end)
 
-    -- Sistema de Bypass
-    game:GetService("UserInputService").InputBegan:Connect(function(input)
+    -- Sistema de Bypass e Toggle do Aimbot
+    game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
         if input.KeyCode == Enum.KeyCode[BypassKey] then
             ScreenGui.Enabled = not ScreenGui.Enabled
+        end
+        
+        -- Toggle do Aimbot com tecla F
+        if input.KeyCode == Enum.KeyCode.F and not gameProcessed then
+            toggleAimbot()
         end
     end)
 
@@ -554,4 +594,5 @@ function loadHub()
 
     print("✅ Hub Premium carregado com sucesso!")
     print("🔑 Pressione " .. BypassKey .. " para mostrar/ocultar o hub")
+    print("🎯 Pressione F para ativar/desativar o Aimbot")
 end
